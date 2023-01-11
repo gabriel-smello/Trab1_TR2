@@ -102,6 +102,7 @@ def part(nomeSala, usuario):
         usuario.send(errorCode.encode('utf-8'))
         return 0
 
+
     # Sala mencionada não existe
     if not listaSalas.__contains__(nomeSala):
         errorCode = f'300 Sala "{nomeSala}" não existe'

@@ -25,7 +25,7 @@ def dadosFunc(mensagem, usuario):
         case 'PART':
             part(dado, usuario)
         case 'LIST':
-            lista()
+            lista(dado, usuario)
         case 'PRIVMSG':
             privmsg()
         case 'WHO':
@@ -102,7 +102,6 @@ def part(nomeSala, usuario):
         usuario.send(errorCode.encode('utf-8'))
         return 0
 
-
     # Sala mencionada não existe
     if not listaSalas.__contains__(nomeSala):
         errorCode = f'300 Sala "{nomeSala}" não existe'
@@ -130,8 +129,14 @@ def part(nomeSala, usuario):
     return 0
 
 
-def lista():
-    return
+def lista(dado, usuario):
+    sucesso = '200 Salas no servidor:\n'
+    for sala in listaSalas:
+        sucesso += listaSalas[sala]['nome'] + \
+            ' (' + str(len(listaSalas[sala]['usuarios'])) + ')' '\n'
+
+    usuario.send(sucesso.encode('utf-8'))
+    return 0
 
 
 def privmsg():
@@ -152,11 +157,11 @@ contaUsuarios = 0
 listaUsuario = {}
 listaSalas = {
     'Futebol': {
-        'name': 'Futebol',
+        'nome': 'Futebol',
         'usuarios': []
     },
     'Receitas': {
-        'name': 'Futebol',
+        'nome': 'Receitas',
         'usuarios': []
     }
 }

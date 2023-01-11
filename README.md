@@ -4,6 +4,8 @@ Profa. Priscila Solís Barreto**
 
 ## PROJETO 1
 
+[] LIST
+
 ## 1. INTRODUÇÃO
 
 A compreensão do desenvolvimento de aplicações cliente servidor e da compreensão dos

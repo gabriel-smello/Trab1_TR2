@@ -4,7 +4,7 @@ Profa. Priscila Solís Barreto**
 
 ## PROJETO 1
 
-[] LIST
+[x] LIST
 
 ## 1. INTRODUÇÃO
 

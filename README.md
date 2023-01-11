@@ -3,8 +3,15 @@ Redes de Computadores – Turma B
 Profa. Priscila Solís Barreto**
 
 ## PROJETO 1
-
+- [ ] NICK
+- [x] USER
 - [x] LIST
+- [x] QUIT
+- [x] JOIN
+- [x] PART
+- [x] LIST
+- [ ] PRIVMSG
+- [ ] WHO
 
 ## 1. INTRODUÇÃO
 

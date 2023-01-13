@@ -27,7 +27,7 @@ def dadosFunc(mensagem, usuario):
         case 'WHO':
             who(dado, usuario)
         case _:
-            errorCode = 'ERR UNKNOWNCOMMAND'
+            errorCode = '500 ERR UNKNOWNCOMMAND'
             print(errorCode)
             usuario.send(errorCode.encode('UTF-8'))
 

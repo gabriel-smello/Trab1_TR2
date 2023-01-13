@@ -4,10 +4,6 @@ import select
 import json
 
 
-def desconectaUsuario():
-    return
-
-
 def dadosFunc(mensagem, usuario):
     mensagem = mensagem.strip()
     mensagem = mensagem.partition(' ')
@@ -18,28 +14,40 @@ def dadosFunc(mensagem, usuario):
             user(dado, usuario)
         case 'NICK':
             nick(dado, usuario)
-        case 'QUIT':
-            quit()
         case 'JOIN':
             join(dado, usuario)
+        case 'SAY':
+            say(dado, usuario)
         case 'PART':
             part(dado, usuario)
         case 'LIST':
             lista(dado, usuario)
         case 'PRIVMSG':
-            privmsg()
+            privmsg(dado, usuario)
         case 'WHO':
-            who()
+            who(dado, usuario)
         case _:
-            errorCode = '500 Comando desconhecido'
+            errorCode = 'ERR UNKNOWNCOMMAND'
             print(errorCode)
             usuario.send(errorCode.encode('UTF-8'))
 
 
-def user(nome, usuario):
-    if usuario in listaUsuario:
-        usuario.send('400 Você já está logado'.encode('utf-8'))
-        return
+def user(usuario):
+    return
+
+
+def nick(nome, usuario):
+
+    if listaUsuario.__contains__(usuario):
+        errorCode = (f'400 Você já está logado')
+        usuario.send(errorCode.encode('UTF-8'))
+        return 0
+
+    for socket in listaUsuario:
+        if listaUsuario[socket]['nome'] == nome:
+            errorCode = f'401 O Nick {nome} já está em uso'
+            usuario.send(errorCode.encode('utf-8'))
+            return 0
 
     listaUsuario[usuario] = {
         'nome': nome,
@@ -51,12 +59,23 @@ def user(nome, usuario):
     return
 
 
-def nick(usuario):
-    return
+def quit(INPUT, entradaUsuario):
+    # QUIT
 
+    nome = listaUsuario[entradaUsuario]['nome']
+    print(f'{nome} foi desconectado')
 
-def quit():
-    return
+    for sala in listaUsuario[entradaUsuario]['salas']:
+        listaSalas[sala]['usuarios'].remove(listaUsuario[entradaUsuario])
+
+    listaUsuario.pop(entradaUsuario)
+
+    entradaUsuario.close()
+    INPUT.remove(entradaUsuario)
+    global contaUsuarios
+    contaUsuarios -= 1
+
+    return 0
 
 
 def join(nomeSala, usuario):
@@ -94,6 +113,43 @@ def join(nomeSala, usuario):
     return 0
 
 
+def say(dado, usuario):
+
+    dado = dado.partition(' ')
+    mensagem = dado[2]
+    nomeSala = dado[0]
+
+    # ---------------------------- ERROS ----------------------------
+    # Comando informado de forma incorreta
+    if not (len(dado) == 3 and len(dado[0]) > 0 and len(dado[2]) > 0):
+        errorCode = f'401 Comando inválido'
+        usuario.send(errorCode.encode('utf-8'))
+        return 0
+
+    # Sala inexistente
+    if not listaSalas.__contains__(nomeSala):
+        errorCode = f'300 Sala "{nomeSala}" não existe'
+        usuario.send(errorCode.encode('utf-8'))
+        return 0
+
+    # Se usuário não está na sala mencionada
+    if not (listaUsuario[usuario] in listaSalas[nomeSala]['usuarios']):
+        errorCode = f'300 Usuário não está na sala'
+        usuario.send(errorCode.encode('utf-8'))
+        return 0
+    # ------------------------------------------------------------------
+
+    usuariosNestaSala = listaSalas[nomeSala]['usuarios']
+    usuarioAtual = listaUsuario[usuario]
+    nome = usuarioAtual['nome']
+
+    for cliente in usuariosNestaSala:
+        if not (cliente == usuarioAtual):
+            sucesso = f'200 [{nomeSala}] {nome} > {mensagem}'
+            cliente['socket'].send(sucesso.encode('utf-8'))
+    return 0
+
+
 def part(nomeSala, usuario):
     # -------------------- ERROS -------------------------------
     # Sala mencionada de forma incorreta
@@ -115,14 +171,14 @@ def part(nomeSala, usuario):
         return 0
     # ------------------------------------------------------------
 
-    clientesNestaSala = listaSalas[nomeSala]['usuarios']
-    clienteAtual = listaUsuario[usuario]
+    usuariosNestaSala = listaSalas[nomeSala]['usuarios']
+    usuarioAtual = listaUsuario[usuario]
 
     # remove usuario da sala
-    clientesNestaSala.remove(clienteAtual)
+    usuariosNestaSala.remove(usuarioAtual)
 
     # remove sala de usuario
-    clienteAtual['salas'].remove(nomeSala)
+    usuarioAtual['salas'].remove(nomeSala)
 
     sucesso = f'200 Voce saiu na sala "{nomeSala}"'
     usuario.send(sucesso.encode('utf-8'))
@@ -139,12 +195,63 @@ def lista(dado, usuario):
     return 0
 
 
-def privmsg():
-    return
+def privmsg(dado, usuario):
+    dado = dado.partition(' ')
+    mensagem = dado[2]
+    destinatario = dado[0]
+
+    # ---------------------------- ERROS ----------------------------
+    # Comando informado de forma incorreta
+    if not (len(dado) == 3 and len(dado[0]) > 0 and len(dado[2]) > 0):
+        errorCode = f'401 Comando inválido'
+        usuario.send(errorCode.encode('utf-8'))
+        return 0
+    # ----------------------------------------------------------------
+
+    for socketCliente in listaUsuario:
+        # Verifica se destinatário existe
+        if listaUsuario[socketCliente]['nome'] == destinatario:
+            # Envia mensagem privada
+            nomeRemetente = listaUsuario[usuario]['nome']
+            sucesso = f'200 Mensagem privada de "{nomeRemetente}" > {mensagem}'
+            listaUsuario[socketCliente]['socket'].send(sucesso.encode('utf-8'))
+
+            # FeedBack da mensagem privada enviada
+            sucesso = f'200 Mensagem privada enviada a "{destinatario}" > {mensagem}'
+            usuario.send(sucesso.encode('utf-8'))
+            return 0
+
+    errorCode = f'300 Usuario "{destinatario}" não encontrado'
+    usuario.send(errorCode.encode('utf-8'))
+    return 0
 
 
-def who():
-    return
+def who(nomeSala, usuario):
+
+    # ----------------------- ERROS ---------------------------------
+    # Comando informado de forma incorreta
+    if (len(str.split(nomeSala, ' ')) > 1 or len(nomeSala) == 0):
+        errorCode = f'400 Nome de sala incorreta'
+        usuario.send(errorCode.encode('utf-8'))
+        return 0
+
+    # Sala mencionada não existe
+    if not listaSalas.__contains__(nomeSala):
+        errorCode = f'300 Sala "{nomeSala}" não existe'
+        usuario.send(errorCode.encode('utf-8'))
+        return 0
+    # ---------------------------------------------------------------
+
+    usuariosNestaSala = listaSalas[nomeSala]['usuarios']
+
+    sucesso = f'200 Usuários em {nomeSala}:\n'
+
+    for cliente in usuariosNestaSala:
+        nome = cliente['nome']
+        sucesso += f'\t{nome}\n'
+
+    usuario.send(sucesso.encode('utf-8'))
+    return 0
 
 
 ##################### MAIN #######################
@@ -191,7 +298,10 @@ while serverStatus:
             if inputUsuario.strip() == "q":
                 serverStatus = 0
         else:
-            mensagem = entradaUsuario.recv(1000)
+            try:
+                mensagem = entradaUsuario.recv(1000)
+            except:
+                quit(INPUT, entradaUsuario)
             if mensagem:
                 mensagem = mensagem.decode('utf-8')
 
@@ -200,7 +310,7 @@ while serverStatus:
                       str(socketFileDescriptor) + ' - ' + mensagem)
                 dadosFunc(mensagem, entradaUsuario)
             else:
-                desconectaUsuario()
+                quit(INPUT, entradaUsuario)
 
 server.close()
 print("server fechou")

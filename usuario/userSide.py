@@ -17,9 +17,9 @@ def setNome(usuario):
     pronto = 0
 
     while not pronto:
-        print(f'Digite seu nome: ', end='', flush=True)
+        print(f'Digite seu nick: ', end='', flush=True)
         nome = sys.stdin.readline().rstrip()
-        enviarDado = 'USER ' + nome
+        enviarDado = 'NICK ' + nome
         usuario.send(enviarDado.encode('utf-8'))
 
         try:

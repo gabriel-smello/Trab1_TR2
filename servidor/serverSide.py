@@ -113,43 +113,6 @@ def join(nomeSala, usuario):
     return 0
 
 
-def say(dado, usuario):
-
-    dado = dado.partition(' ')
-    mensagem = dado[2]
-    nomeSala = dado[0]
-
-    # ---------------------------- ERROS ----------------------------
-    # Comando informado de forma incorreta
-    if not (len(dado) == 3 and len(dado[0]) > 0 and len(dado[2]) > 0):
-        errorCode = f'401 Comando inválido'
-        usuario.send(errorCode.encode('utf-8'))
-        return 0
-
-    # Sala inexistente
-    if not listaSalas.__contains__(nomeSala):
-        errorCode = f'300 Sala "{nomeSala}" não existe'
-        usuario.send(errorCode.encode('utf-8'))
-        return 0
-
-    # Se usuário não está na sala mencionada
-    if not (listaUsuario[usuario] in listaSalas[nomeSala]['usuarios']):
-        errorCode = f'300 Usuário não está na sala'
-        usuario.send(errorCode.encode('utf-8'))
-        return 0
-    # ------------------------------------------------------------------
-
-    usuariosNestaSala = listaSalas[nomeSala]['usuarios']
-    usuarioAtual = listaUsuario[usuario]
-    nome = usuarioAtual['nome']
-
-    for cliente in usuariosNestaSala:
-        if not (cliente == usuarioAtual):
-            sucesso = f'200 [{nomeSala}] {nome} > {mensagem}'
-            cliente['socket'].send(sucesso.encode('utf-8'))
-    return 0
-
-
 def part(nomeSala, usuario):
     # -------------------- ERROS -------------------------------
     # Sala mencionada de forma incorreta
@@ -207,23 +170,35 @@ def privmsg(dado, usuario):
         usuario.send(errorCode.encode('utf-8'))
         return 0
     # ----------------------------------------------------------------
+    nomeRemetente = listaUsuario[usuario]['nome']
 
     for socketCliente in listaUsuario:
         # Verifica se destinatário existe
         if listaUsuario[socketCliente]['nome'] == destinatario:
             # Envia mensagem privada
-            nomeRemetente = listaUsuario[usuario]['nome']
             sucesso = f'200 Mensagem privada de "{nomeRemetente}" > {mensagem}'
             listaUsuario[socketCliente]['socket'].send(sucesso.encode('utf-8'))
-
-            # FeedBack da mensagem privada enviada
-            sucesso = f'200 Mensagem privada enviada a "{destinatario}" > {mensagem}'
-            usuario.send(sucesso.encode('utf-8'))
             return 0
 
-    errorCode = f'300 Usuario "{destinatario}" não encontrado'
-    usuario.send(errorCode.encode('utf-8'))
-    return 0
+    for sala in listaSalas:
+        if not (listaSalas[sala]['nome'] == destinatario):
+            errorCode = f'300 Usuario/Sala "{destinatario}" não encontrado'
+            usuario.send(errorCode.encode('utf-8'))
+            return 0
+
+        usuariosNestaSala = listaSalas[destinatario]['usuarios']
+        usuarioAtual = listaUsuario[usuario]
+
+        if not (listaUsuario[usuario] in listaSalas[destinatario]['usuarios']):
+            errorCode = f'300 Usuário não está na sala'
+            usuario.send(errorCode.encode('utf-8'))
+            return 0
+
+        for cliente in usuariosNestaSala:
+            if not (cliente == usuarioAtual):
+                sucesso = f'200 [{destinatario}] {nomeRemetente} > {mensagem}'
+                cliente['socket'].send(sucesso.encode('utf-8'))
+                return 0
 
 
 def who(nomeSala, usuario):

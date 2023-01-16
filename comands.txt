@@ -1,0 +1,11 @@
+USER:
+    JOIN <Nome da Sala>                                 Entrar em uma sala
+    PART <Nome da Sala>                                 Sair de uma sala
+    LIST                                                Lista todas as salas no servidor junto da quantidade de usuários em cada um
+    PRIVMSG <Nome Sala/Usuario> <Mensagem>              Envia mensagem para uma sala ou um usuário específico
+    WHO <Nome da Sala>                                  Lista os nomes de todos os usuários de uma determinada sala
+    QUIT                                                Se desconecta do servidor
+
+Servidor:
+    q                                                   Desliga o servidor
+

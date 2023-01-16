@@ -16,8 +16,6 @@ def dadosFunc(mensagem, usuario):
             nick(dado, usuario)
         case 'JOIN':
             join(dado, usuario)
-        case 'SAY':
-            say(dado, usuario)
         case 'PART':
             part(dado, usuario)
         case 'LIST':
@@ -173,7 +171,7 @@ def privmsg(dado, usuario):
     nomeRemetente = listaUsuario[usuario]['nome']
 
     for socketCliente in listaUsuario:
-        # Verifica se destinatário existe
+        # Verifica se usuario destino existe
         if listaUsuario[socketCliente]['nome'] == destinatario:
             # Envia mensagem privada
             sucesso = f'200 Mensagem privada de "{nomeRemetente}" > {mensagem}'
@@ -181,6 +179,7 @@ def privmsg(dado, usuario):
             return 0
 
     for sala in listaSalas:
+        # Verifica se sala destino existe
         if not (listaSalas[sala]['nome'] == destinatario):
             errorCode = f'300 Usuario/Sala "{destinatario}" não encontrado'
             usuario.send(errorCode.encode('utf-8'))
@@ -188,12 +187,12 @@ def privmsg(dado, usuario):
 
         usuariosNestaSala = listaSalas[destinatario]['usuarios']
         usuarioAtual = listaUsuario[usuario]
-
+        # Verifica se o remetente está na sala destino
         if not (listaUsuario[usuario] in listaSalas[destinatario]['usuarios']):
             errorCode = f'300 Usuário não está na sala'
             usuario.send(errorCode.encode('utf-8'))
             return 0
-
+        # Envia mensagem para todos os usuários destinos
         for cliente in usuariosNestaSala:
             if not (cliente == usuarioAtual):
                 sucesso = f'200 [{destinatario}] {nomeRemetente} > {mensagem}'
